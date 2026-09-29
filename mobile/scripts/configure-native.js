@@ -147,5 +147,7 @@ if (p) {
   setBool('UIStatusBarHidden', true);
   setBool('UIViewControllerBasedStatusBarAppearance', false);
   setBool('UIRequiresFullScreen', true);
-  write(plist, p, 'iOS: portrait lock, hidden status bar, iPad full screen applied');
+  // Export compliance: only exempt (HTTPS/OS) encryption, so TestFlight skips the compliance prompt.
+  setBool('ITSAppUsesNonExemptEncryption', false);
+  write(plist, p, 'iOS: portrait lock, hidden status bar, iPad full screen, export compliance applied');
 }
