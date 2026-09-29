@@ -23,21 +23,21 @@ concurrency:
 
 jobs:
   build:
-    # Pinned image (Xcode 16) rather than macos-latest, so an image bump can't silently
-    # move to an Xcode that Capacitor 6 doesn't support.
-    runs-on: macos-15
+    # Pinned image (Xcode 26) rather than macos-latest, so an image bump can't silently
+    # move to an Xcode that Capacitor 8 doesn't support.
+    runs-on: macos-26
     timeout-minutes: 45
     defaults:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('mobile/package.json', 'mobile/package-lock.json') }}
@@ -76,7 +76,7 @@ jobs:
         working-directory: mobile/ios/App/build/Build/Products/Debug-iphonesimulator
         run: ditto -c -k --sequesterRsrc --keepParent App.app "$GITHUB_WORKSPACE/mobile/Kingdoms-simulator.app.zip"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: kingdoms-ios-simulator-app
           path: mobile/Kingdoms-simulator.app.zip

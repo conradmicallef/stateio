@@ -29,20 +29,20 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      # Capacitor 6 = AGP 8.2 / Gradle 8.2 -> Java 17.
-      - uses: actions/setup-java@v4
+      # Capacitor 8 needs Java 21 (Node 22).
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
 
       # setup-node's built-in cache needs a lockfile; cache ~/.npm directly so it works without one.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('mobile/package.json', 'mobile/package-lock.json') }}
@@ -67,7 +67,7 @@ jobs:
       - name: Configure native (portrait, immersive, dark theme)
         run: npm run configure-native
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: Build debug APK
         working-directory: mobile/android
@@ -75,7 +75,7 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: kingdoms-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/*.apk
