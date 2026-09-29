@@ -1,6 +1,7 @@
 // Idempotent patches to the generated native projects (run after `cap add` / `cap sync`):
 //  Android: portrait lock, dark window/splash background, immersive fullscreen
 //           (status + navigation bars hidden, swipe to reveal), no WebView overscroll.
+//  Android also upgraded to AGP 9.4 / Gradle 9.8.
 //  iOS:     portrait lock, status bar hidden, full-screen on iPad (required for portrait lock).
 const fs = require('fs');
 const path = require('path');
@@ -123,6 +124,25 @@ public class MainActivity extends BridgeActivity {
       console.warn('Android: MainActivity.java is customised; immersive patch skipped (add it manually).');
     }
   }
+}
+
+// Upgrade Android build tooling past Capacitor's template pins (AGP 9.4 needs Gradle >= 9.6, JDK 17+).
+const AGP = '9.4.1', GRADLE = '9.8.0';
+const rootGradle = path.join(root, 'android/build.gradle');
+const wrapper = path.join(root, 'android/gradle/wrapper/gradle-wrapper.properties');
+const rg = read(rootGradle);
+if (rg && !rg.includes(`com.android.tools.build:gradle:${AGP}`)) {
+  write(rootGradle, rg.replace(/(com\.android\.tools\.build:gradle:)[\w.\-]+/, `$1${AGP}`), `Android: AGP -> ${AGP}`);
+}
+const wp = read(wrapper);
+if (wp && !wp.includes(`gradle-${GRADLE}-`)) {
+  write(wrapper, wp.replace(/gradle-[\d.]+(-rc-\d+)?-(all|bin)\.zip/, `gradle-${GRADLE}-all.zip`), `Android: Gradle -> ${GRADLE}`);
+}
+// AGP 9 removed the non-optimizing default proguard file.
+const appGradle = path.join(root, 'android/app/build.gradle');
+const ag = read(appGradle);
+if (ag && ag.includes("'proguard-android.txt'")) {
+  write(appGradle, ag.replace("'proguard-android.txt'", "'proguard-android-optimize.txt'"), 'Android: proguard file updated for AGP 9');
 }
 
 // ---------------------------------------------------------------------- iOS
