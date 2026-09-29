@@ -1,0 +1,31 @@
+{
+  "name": "kingdoms-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Capacitor wrapper for the Kingdoms PWA",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "prepare-www": "node scripts/copy-www.js",
+    "configure-native": "node scripts/configure-native.js",
+    "make-assets": "node scripts/make-assets.js",
+    "assets:android": "npm run make-assets && capacitor-assets generate --android",
+    "assets:ios": "npm run make-assets && capacitor-assets generate --ios",
+    "sync": "npm run prepare-www && cap sync && npm run configure-native"
+  },
+  "dependencies": {
+    "@capacitor-community/keep-awake": "^5.0.1",
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/haptics": "^6.0.2",
+    "@capacitor/ios": "^6.2.0",
+    "@capacitor/splash-screen": "^6.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.2.0",
+    "sharp": "^0.32.6"
+  }
+}

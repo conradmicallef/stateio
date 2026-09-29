@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#8fd3fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Kingdoms</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <span id="lvl">Level 1</span>
+  <div id="bar"></div>
+  <button id="restart" aria-label="Restart level">&#8635;</button>
+</div>
+<div id="overlay" class="show">
+  <div class="card">
+    <h1 id="title">Kingdoms</h1>
+    <div id="stars"></div>
+    <p id="msg">Drag from your blue land to attack. Swipe across several of your states to send them together.<br>Towers shoot passing enemies. Feed a full building to upgrade it.</p>
+    <button id="play">Play</button>
+    <button id="install" hidden>Install app</button>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

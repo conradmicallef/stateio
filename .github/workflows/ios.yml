@@ -1,0 +1,83 @@
+name: iOS
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'pwa/**'
+      - 'mobile/**'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    paths:
+      - 'pwa/**'
+      - 'mobile/**'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Pinned image (Xcode 16) rather than macos-latest, so an image bump can't silently
+    # move to an Xcode that Capacitor 6 doesn't support.
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('mobile/package.json', 'mobile/package-lock.json') }}
+          restore-keys: npm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+
+      - name: Copy web assets (+ native bridge)
+        run: npm run prepare-www
+
+      - name: Add iOS platform if absent
+        run: '[ -d ios ] || npx cap add ios'
+
+      - name: Generate icons and splash from pwa/icon.svg
+        run: npm run assets:ios
+
+      - name: Sync (runs pod install)
+        run: npx cap sync ios
+
+      - name: Configure native (portrait, hidden status bar)
+        run: npm run configure-native
+
+      - name: Build for simulator (unsigned)
+        working-directory: mobile/ios/App
+        run: |
+          set -o pipefail
+          if [ -d App.xcworkspace ]; then TARGET="-workspace App.xcworkspace"; else TARGET="-project App.xcodeproj"; fi
+          xcodebuild build $TARGET -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO COMPILER_INDEX_STORE_ENABLE=NO
+
+      - name: Package .app
+        working-directory: mobile/ios/App/build/Build/Products/Debug-iphonesimulator
+        run: ditto -c -k --sequesterRsrc --keepParent App.app "$GITHUB_WORKSPACE/mobile/Kingdoms-simulator.app.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kingdoms-ios-simulator-app
+          path: mobile/Kingdoms-simulator.app.zip
+          if-no-files-found: error

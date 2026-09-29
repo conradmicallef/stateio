@@ -1,0 +1,7 @@
+node_modules/
+www/
+# generated from ../pwa/icon.svg by scripts/make-assets.js
+assets/
+# android/ and ios/ are generated in CI (cap add); remove these lines to commit them
+android/
+ios/

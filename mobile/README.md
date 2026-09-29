@@ -1,0 +1,67 @@
+# Kingdoms - Capacitor wrapper
+
+Wraps `../pwa` as native iOS/Android apps (Capacitor 6, Java 17, Node 20).
+App id `com.example.kingdoms`, name `Kingdoms` (see `capacitor.config.json`).
+
+## How it works
+- `npm run prepare-www` copies `../pwa` into `www/` (skips `sw.js`; game.js also skips SW registration when native),
+  copies `native-bridge.js` into `www/` and injects `<script src="native-bridge.js">` before `game.js`.
+  The PWA itself is never modified; the bridge only runs when `Capacitor.isNativePlatform()`.
+- `npx cap add android|ios` generates the native projects (done in CI if absent).
+- `npm run assets:android|ios` rasterises `../pwa/icon.svg` into `assets/*.png` (`scripts/make-assets.js`, via `sharp`),
+  then `@capacitor/assets` generates all launcher icons (incl. Android adaptive) and splash images. No PNG is committed.
+- `scripts/configure-native.js` (idempotent, run after every sync) patches the native projects.
+
+## Native feel (State.io-style)
+| Feature | How |
+|---|---|
+| Fullscreen / immersive | Android: generated `MainActivity` hides status + nav bars (swipe to reveal transiently), re-applied on resume/focus. iOS: `UIStatusBarHidden` + `UIViewControllerBasedStatusBarAppearance=false`. |
+| Portrait lock | AndroidManifest `screenOrientation=portrait`; Info.plist portrait-only (iPhone + iPad) + `UIRequiresFullScreen` (needed for iPad). |
+| Safe areas / notch | iOS: `contentInset: never` + `viewport-fit=cover`; the HUD uses `env(safe-area-inset-top)`. Android: default cutout mode letterboxes the notch while bars are hidden, so nothing is drawn under it. |
+| No overscroll / bounce | iOS `scrollEnabled: false`; Android WebView `OVER_SCROLL_NEVER`; CSS `overscroll-behavior:none`; long-press menu/callout disabled. |
+| Dark splash / no white flash | `#1b2433` everywhere: Capacitor `backgroundColor`, SplashScreen plugin, Android window + Android 12 splash background, generated splash images. |
+| Haptics | `@capacitor/haptics`: medium impact on capture, heavy when you lose a tower, success/error notification on win/lose. |
+| Keep awake | `@capacitor-community/keep-awake`: on while playing (overlay hidden), released on menus and when backgrounded. |
+| Android back | In menus: minimise app. In a level: "Press back again to exit" toast, second press within 2 s minimises. |
+
+Win/lose haptics and keep-awake work with the current game.js by watching the DOM (`#overlay.show`, `#title` text).
+**Capture haptics need a one-line hook in game.js** (safe on the web, where nobody listens):
+```js
+// in arrive(), where ownership changes:
+if (t.troops < 0) {
+  const was = t.owner; t.owner = u.owner; t.troops = 1;
+  if (was === PLAYER || u.owner === PLAYER)
+    dispatchEvent(new CustomEvent('kingdoms:capture', { detail: { lost: was === PLAYER } }));
+}
+```
+Other optional hooks: `kingdoms:send`, `kingdoms:win`, `kingdoms:lose`, `kingdoms:haptic` (`detail.type`).
+The bridge fires `kingdoms:back` (cancelable, `preventDefault()` to handle back yourself, e.g. to pause) and
+`kingdoms:appstate` (`detail.active`). `window.KingdomsNative.haptic(kind)` is also available in native builds.
+
+## CI (repo root = `state/`)
+Both workflows run on changes to `pwa/`, `mobile/` or the workflow file, and on manual dispatch.
+- `.github/workflows/android.yml` (ubuntu, Java 17): artifact `kingdoms-debug-apk`.
+- `.github/workflows/ios.yml` (macos-15 / Xcode 16): unsigned simulator build, artifact `kingdoms-ios-simulator-app`
+  (unzip, then `xcrun simctl install booted App.app`).
+- Pipeline: npm install -> prepare-www -> cap add (if absent) -> assets -> cap sync -> configure-native -> build.
+- Caching: `~/.npm` (works without a lockfile) and Gradle via `gradle/actions/setup-gradle`.
+
+## Local steps (optional)
+```
+cd mobile
+npm install
+npm run prepare-www
+npx cap add android   # and/or: npx cap add ios (macOS)
+npm run assets:android   # / assets:ios
+npm run sync
+```
+
+## Manual steps
+- Change the app id in `capacitor.config.json` before publishing (before `cap add`, or edit native projects afterwards).
+- Add the `kingdoms:capture` hook to `pwa/game.js` (see above) to get capture haptics.
+- Run `npm install` once and commit `package-lock.json` for reproducible `npm ci`.
+- Android release: create a keystore, add signing config and GitHub secrets, use `bundleRelease`.
+- iOS device/App Store: needs an Apple Developer account, certificate and provisioning profile; CI here is unsigned simulator only.
+- `android/` and `ios/` are gitignored (regenerated in CI). If you commit them, keep running `npm run configure-native`
+  after syncs; a customised `MainActivity.java` is left alone (the immersive patch is then skipped with a warning).
+- Custom icon art: edit `pwa/icon.svg` (or change `scripts/make-assets.js`); `assets/` is regenerated each run.
