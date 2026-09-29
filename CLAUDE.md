@@ -16,4 +16,4 @@ A State.io-style territory-conquest game. Vanilla JS PWA in `pwa/`, wrapped as n
 - `game.js` skips service worker registration when `window.Capacitor.isNativePlatform()` is true — keep that.
 - The native bridge depends on DOM ids `#overlay` and `#title` and on the `kingdoms:*` window events (`kingdoms:capture`, etc.). `game.js` dispatches `kingdoms:capture` in `capture()`. Win/lose haptics match the `#title` text ("complete", "Defeated") — update `mobile/native-bridge.js` if that wording changes.
 - Levels are seeded, so a level is identical every time; progress is saved in `localStorage` under `kingdoms.level`.
-- The app id `com.example.kingdoms` in `mobile/capacitor.config.json` is a placeholder.
+- App id is `com.conradmicallef.kingdoms` (`mobile/capacitor.config.json`); the TestFlight workflow signs with a profile for it. The app record must exist in App Store Connect.

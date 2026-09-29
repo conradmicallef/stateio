@@ -1,7 +1,7 @@
 # Kingdoms - Capacitor wrapper
 
 Wraps `../pwa` as native iOS/Android apps (Capacitor 8, Java 21, Node 22).
-App id `com.example.kingdoms`, name `Kingdoms` (see `capacitor.config.json`).
+App id `com.conradmicallef.kingdoms`, name `Kingdoms` (see `capacitor.config.json`).
 
 ## How it works
 - `npm run prepare-www` copies `../pwa` into `www/` (skips `sw.js`; game.js also skips SW registration when native),
@@ -48,7 +48,7 @@ Manual dispatch or a `v*` tag builds a signed Release archive and uploads it wit
 | `APPLE_TEAM_ID` | 10-character team id |
 | `ASC_KEY_ID`, `ASC_ISSUER_ID` | App Store Connect API key id and issuer id |
 | `ASC_KEY_BASE64` | the API key `.p8`, base64-encoded |
-Also: set a real app id first, and create the app record in App Store Connect with that bundle id. The build number is the run number.
+Also: create the app record in App Store Connect with that bundle id. The build number is the run number.
 
 ## Local steps (optional)
 ```
@@ -61,7 +61,6 @@ npm run sync
 ```
 
 ## Manual steps
-- Change the app id in `capacitor.config.json` before publishing (before `cap add`, or edit native projects afterwards).
 - Run `npm install` once and commit `package-lock.json` for reproducible `npm ci`.
 - Android release: create a keystore, add signing config and GitHub secrets, use `bundleRelease`.
 - iOS device/App Store: needs an Apple Developer account, certificate and provisioning profile; `ios.yml` is an unsigned simulator build; `testflight.yml` does the signed upload.
